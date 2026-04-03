@@ -251,7 +251,11 @@ export default function ProfessorDetail() {
                 className="rating-circle-lg"
                 style={{ backgroundColor: ratingColor }}
               >
-                {professor.avg_rating > 0 ? professor.avg_rating.toFixed(1) : 'N/A'}
+                {professor.avg_rating > 0 ? professor.avg_rating.toFixed(1) : (
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '55%', height: '55%', opacity: 0.9 }}>
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                )}
               </div>
               <p className="text-xs text-white/50 mt-2 font-medium">Genel Puan</p>
             </div>
@@ -414,7 +418,11 @@ export default function ProfessorDetail() {
                         className="rating-circle shrink-0"
                         style={{ width: 32, height: 32, fontSize: '0.65rem', backgroundColor: getRatingColor(p.avg_rating) }}
                       >
-                        {p.avg_rating > 0 ? p.avg_rating.toFixed(1) : 'N/A'}
+                        {p.avg_rating > 0 ? p.avg_rating.toFixed(1) : (
+                          <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '55%', height: '55%', opacity: 0.9 }}>
+                            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                          </svg>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate group-hover:text-gray-600">
