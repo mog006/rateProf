@@ -75,6 +75,7 @@ export interface Review {
   helpful_count: number;
   not_helpful_count: number;
   user_name?: string;
+  is_graduate?: number;
   course_name?: string;
   course_code?: string;
   professor_name?: string;
@@ -87,6 +88,8 @@ export interface User {
   name: string;
   email: string;
   university_id?: number;
+  verified: boolean;
+  is_graduate: boolean;
 }
 
 export interface SearchResult {

@@ -8,10 +8,11 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: #f9fafb;
-  color: #111827;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #FAFAFA;
+  color: #2D2D2D;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -20,7 +21,7 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-coral-500 hover:bg-coral-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
     @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200;
@@ -29,37 +30,115 @@ body {
     @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
   }
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-400 focus:border-transparent;
   }
 }
 
+/* Rating circles — base */
 .rating-circle {
-  width: 80px;
-  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+/* Large 96px circle for professor detail header */
+.rating-circle-lg {
+  width: 96px;
+  height: 96px;
+  font-size: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 800;
   color: white;
   flex-shrink: 0;
 }
 
-.rating-excellent { background-color: #10b981; }
-.rating-good { background-color: #3b82f6; }
-.rating-average { background-color: #f59e0b; }
-.rating-poor { background-color: #ef4444; }
+/* Medium 64px */
+.rating-circle-md {
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+}
 
+/* Small 48px */
+.rating-circle-sm {
+  width: 48px;
+  height: 48px;
+  font-size: 1.1rem;
+}
+
+/* RMP-style rating colors */
+.rating-green  { background-color: #4CAF50; }
+.rating-orange { background-color: #FF9800; }
+.rating-red    { background-color: #F44336; }
+.rating-gray   { background-color: #9E9E9E; }
+
+/* Legacy aliases — keep for backward compatibility */
+.rating-excellent { background-color: #4CAF50; }
+.rating-good      { background-color: #FF9800; }
+.rating-average   { background-color: #FF9800; }
+.rating-poor      { background-color: #F44336; }
+
+/* Review card left border accent */
+.review-border-green  { border-left: 4px solid #4CAF50; }
+.review-border-orange { border-left: 4px solid #FF9800; }
+.review-border-red    { border-left: 4px solid #F44336; }
+.review-border-gray   { border-left: 4px solid #9E9E9E; }
+
+/* Smooth fade-in for dropdowns */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.18s ease-out;
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Slide down for mobile menu */
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to   { opacity: 1; max-height: 400px; }
+}
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions for interactive elements */
+a, button {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Tag chips */
+.tag-chip {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200;
+}
+
+/* Progress bars */
+.rating-bar-fill-green  { background-color: #4CAF50; }
+.rating-bar-fill-orange { background-color: #FF9800; }
+.rating-bar-fill-red    { background-color: #F44336; }

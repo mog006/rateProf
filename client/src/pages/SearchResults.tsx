@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, GraduationCap, Users, BookOpen } from 'lucide-react';
+import { Search, GraduationCap, Users } from 'lucide-react';
 import { search } from '../lib/api';
 import type { SearchResult } from '../types';
 import ProfessorCard from '../components/ProfessorCard';
@@ -11,7 +11,7 @@ export default function SearchResults() {
   const [query, setQuery] = useState(q);
   const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'all' | 'professors' | 'universities' | 'courses'>('all');
+  const [tab, setTab] = useState<'all' | 'professors' | 'universities'>('all');
 
   useEffect(() => {
     if (!q) return;
@@ -26,7 +26,7 @@ export default function SearchResults() {
     if (query.trim()) setSearchParams({ q: query.trim() });
   };
 
-  const total = results ? results.professors.length + results.universities.length + results.courses.length : 0;
+  const total = results ? results.professors.length + results.universities.length : 0;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -39,7 +39,7 @@ export default function SearchResults() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Hoca, üniversite veya ders ara..."
-            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-coral-400 bg-white shadow-sm"
           />
         </div>
       </form>
@@ -57,12 +57,11 @@ export default function SearchResults() {
             { key: 'all', label: `Tümü (${total})` },
             { key: 'professors', label: `Hocalar (${results.professors.length})` },
             { key: 'universities', label: `Üniversiteler (${results.universities.length})` },
-            { key: 'courses', label: `Dersler (${results.courses.length})` },
           ].map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key as any)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.key ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               {t.label}
             </button>
@@ -98,7 +97,7 @@ export default function SearchResults() {
           {(tab === 'all' || tab === 'professors') && results.professors.length > 0 && (
             <div>
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-blue-600" /> Hocalar
+                <Users className="w-5 h-5 text-gray-500" /> Hocalar
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {results.professors.map(p => <ProfessorCard key={p.id} professor={p} />)}
@@ -114,9 +113,9 @@ export default function SearchResults() {
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {results.universities.map(u => (
-                  <Link key={u.id} to={`/universities/${u.id}`} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all flex items-center gap-3">
+                  <Link key={u.id} to={`/universities/${u.id}`} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-gray-200 hover:shadow-md transition-all flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shrink-0" style={{ backgroundColor: u.logo_color }}>
-                      {u.short_name.slice(0, 3)}
+                      {u.name.split(' ').filter((w: string) => w.length > 2).slice(0, 2).map((w: string) => w[0]).join('') || u.name.slice(0, 2)}
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 text-sm">{u.name}</h3>
@@ -128,32 +127,6 @@ export default function SearchResults() {
             </div>
           )}
 
-          {/* Courses */}
-          {(tab === 'all' || tab === 'courses') && results.courses.length > 0 && (
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
-                <BookOpen className="w-5 h-5 text-purple-600" /> Dersler
-              </h2>
-              <div className="space-y-2">
-                {results.courses.map(c => (
-                  <div key={c.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                        <BookOpen className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">{c.code} — {c.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {c.professor_name && `${c.professor_name} · `}
-                          {c.university_name} · {c.semester} {c.year}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -25,6 +25,9 @@ export const getUniversity = (id: number | string) =>
 export const getUniversityProfessors = (id: number | string, params?: Record<string, string>) =>
   api.get(`/universities/${id}/professors`, { params }).then(r => r.data);
 
+export const getUniversityDepartments = (id: number | string) =>
+  api.get(`/universities/${id}/departments`).then(r => r.data);
+
 export const getUniversityCourses = (id: number | string, params?: Record<string, string>) =>
   api.get(`/universities/${id}/courses`, { params }).then(r => r.data);
 
@@ -49,6 +52,9 @@ export const getRecentReviews = () =>
   api.get('/reviews/recent').then(r => r.data);
 
 // Courses
+export const addCourse = (professorId: number | string, data: { code: string; name: string }) =>
+  api.post(`/professors/${professorId}/courses`, data).then(r => r.data);
+
 export const getCourses = (params?: Record<string, string>) =>
   api.get('/courses', { params }).then(r => r.data);
 
@@ -63,8 +69,25 @@ export const search = (q: string) =>
 export const login = (email: string, password: string) =>
   api.post('/auth/login', { email, password }).then(r => r.data);
 
-export const register = (name: string, email: string, password: string, university_id?: number) =>
-  api.post('/auth/register', { name, email, password, university_id }).then(r => r.data);
+export const register = (data: {
+  name: string; email: string; password: string;
+  university_id?: number; is_graduate?: boolean; graduation_year?: number;
+}) => api.post('/auth/register', data).then(r => r.data);
+
+export const verifyEmail = (code: string) =>
+  api.post('/auth/verify-email', { code }).then(r => r.data);
+
+export const resendVerification = () =>
+  api.post('/auth/resend-verification').then(r => r.data);
 
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data);
+
+export const getMyReviews = () =>
+  api.get('/auth/reviews').then(r => r.data);
+
+export const reportReview = (id: number, reason: string) =>
+  api.post(`/reviews/${id}/report`, { reason }).then(r => r.data);
+
+export const getStats = () =>
+  api.get('/stats').then(r => r.data);

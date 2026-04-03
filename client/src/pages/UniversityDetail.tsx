@@ -94,17 +94,17 @@ export default function UniversityDetail() {
           <div className="flex items-center gap-2 text-sm text-white/70 mb-4">
             <Link to="/universities" className="hover:text-white transition-colors">Üniversiteler</Link>
             <ChevronRight className="w-4 h-4" />
-            <span>{university.short_name}</span>
+            <span>{university.name}</span>
           </div>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center text-2xl font-extrabold shadow-lg shrink-0" style={{ color }}>
-              {(university.short_name || university.name).slice(0, 3)}
+              {university.name.split(' ').filter((w: string) => w.length > 2).slice(0, 2).map((w: string) => w[0]).join('') || university.name.slice(0, 2)}
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-extrabold">{university.name}</h1>
               <div className="flex flex-wrap items-center gap-4 mt-2 text-white/80 text-sm">
                 <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{university.city}</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${university.type === 'devlet' ? 'bg-green-400/20 text-green-200' : 'bg-blue-400/20 text-blue-200'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${university.type === 'devlet' ? 'bg-green-400/20 text-green-200' : 'bg-amber-400/20 text-amber-200'}`}>
                   {university.type === 'devlet' ? 'Devlet' : 'Vakıf'}
                 </span>
                 {university.website && (
@@ -145,7 +145,7 @@ export default function UniversityDetail() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                activeTab === tab.key ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -161,7 +161,7 @@ export default function UniversityDetail() {
               <select
                 value={selectedFaculty ?? ''}
                 onChange={e => { setSelectedFaculty(e.target.value ? Number(e.target.value) : null); setSelectedDept(null); }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-coral-300"
               >
                 <option value="">Tüm Fakülteler</option>
                 {faculties.map(f => <option key={f.id} value={f.id}>{f.name} ({f.prof_count})</option>)}
@@ -170,7 +170,7 @@ export default function UniversityDetail() {
               <select
                 value={selectedDept ?? ''}
                 onChange={e => setSelectedDept(e.target.value ? Number(e.target.value) : null)}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-coral-300 disabled:opacity-50"
                 disabled={filteredDepts.length === 0}
               >
                 <option value="">Tüm Bölümler</option>
@@ -186,10 +186,10 @@ export default function UniversityDetail() {
                     value={searchInput}
                     onChange={e => setSearchInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') setSearch(searchInput); }}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-coral-300"
                   />
                 </div>
-                <button onClick={() => setSearch(searchInput)} className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Ara</button>
+                <button onClick={() => setSearch(searchInput)} className="px-3 py-2 text-sm bg-coral-500 text-white rounded-lg hover:bg-coral-600">Ara</button>
                 {(search || selectedFaculty || selectedDept) && (
                   <button
                     onClick={() => { setSearch(''); setSearchInput(''); setSelectedFaculty(null); setSelectedDept(null); }}
@@ -217,14 +217,14 @@ export default function UniversityDetail() {
                   <Link
                     key={p.id}
                     to={`/professors/${p.id}`}
-                    className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all flex items-start gap-3"
+                    className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-gray-200 hover:shadow-md transition-all flex items-start gap-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-sm shrink-0">
                       {p.name.split(' ').map((n: string) => n[0]).filter(Boolean).slice(0, 2).join('')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{p.name}</p>
-                      <p className="text-xs text-blue-600 font-medium">{p.title}</p>
+                      <p className="text-xs text-gray-500 font-medium">{p.title}</p>
                       <p className="text-xs text-gray-500 truncate mt-0.5">{p.department_name || p.faculty_name || '—'}</p>
                     </div>
                     {p.num_ratings > 0 ? (
@@ -259,7 +259,7 @@ export default function UniversityDetail() {
                   else pg = page - 3 + i;
                   return (
                     <button key={pg} onClick={() => setPage(pg)}
-                      className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${pg === page ? 'bg-blue-600 text-white' : 'border border-gray-200 hover:bg-gray-50 text-gray-700'}`}>
+                      className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${pg === page ? 'bg-gray-900 text-white' : 'border border-gray-200 hover:bg-gray-50 text-gray-700'}`}>
                       {pg}
                     </button>
                   );

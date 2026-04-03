@@ -1,58 +1,76 @@
 import { Link } from 'react-router-dom';
-import { MessageSquare, ThumbsUp } from 'lucide-react';
 import type { Professor } from '../types';
-import RatingBadge from './RatingBadge';
 
 interface Props {
   professor: Professor;
 }
 
+function getRatingColor(r: number): string {
+  if (r <= 0) return '#9E9E9E';
+  if (r >= 4) return '#4CAF50';
+  if (r >= 3) return '#FF9800';
+  return '#F44336';
+}
+
 export default function ProfessorCard({ professor }: Props) {
+  const ratingColor = getRatingColor(professor.avg_rating);
+
   return (
     <Link
       to={`/professors/${professor.id}`}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-blue-200 transition-all duration-200 flex gap-4 items-start"
+      className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 flex gap-4 items-center group"
     >
-      <RatingBadge rating={professor.avg_rating} size="sm" />
+      {/* Rating circle */}
+      <div
+        className="rating-circle rating-circle-sm flex-shrink-0"
+        style={{ backgroundColor: ratingColor }}
+      >
+        {professor.avg_rating > 0 ? professor.avg_rating.toFixed(1) : 'N/A'}
+      </div>
 
+      {/* Center info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-              {professor.title} {professor.name}
-            </h3>
-            {professor.department_name && (
-              <p className="text-xs text-blue-600 font-medium mt-0.5">{professor.department_name}</p>
-            )}
-            {professor.university_name && (
-              <p className="text-xs text-gray-500 mt-0.5">{professor.university_short || professor.university_name}</p>
-            )}
-          </div>
-        </div>
+        <h3 className="font-bold text-gray-900 text-sm leading-tight group-hover:text-gray-700 transition-colors truncate">
+          {professor.title} {professor.name}
+        </h3>
+        {professor.department_name && (
+          <p className="text-xs text-gray-500 font-medium mt-0.5 truncate">
+            {professor.department_name}
+          </p>
+        )}
+        {professor.university_name && (
+          <p className="text-xs text-gray-500 mt-0.5 truncate">{professor.university_name}</p>
+        )}
 
-        <div className="flex items-center gap-4 mt-2">
-          <div className="flex items-center gap-1">
-            <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-xs text-gray-500">{professor.num_ratings} değerlendirme</span>
-          </div>
-          {professor.would_take_again > 0 && (
-            <div className="flex items-center gap-1">
-              <ThumbsUp className="w-3.5 h-3.5 text-green-500" />
-              <span className="text-xs text-gray-500">%{Math.round(professor.would_take_again)} tekrar alır</span>
+        {/* Difficulty bar */}
+        {professor.difficulty > 0 && (
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-gray-400 shrink-0">Zorluk</span>
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${(professor.difficulty / 5) * 100}%`,
+                  background: `linear-gradient(to right, #4CAF50, #F44336)`,
+                }}
+              />
             </div>
-          )}
-        </div>
-
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-gray-500">Zorluk:</span>
-          <div className="flex-1 max-w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-green-400 to-red-400"
-              style={{ width: `${(professor.difficulty / 5) * 100}%` }}
-            />
+            <span className="text-xs font-semibold text-gray-600 shrink-0">
+              {professor.difficulty.toFixed(1)}/5
+            </span>
           </div>
-          <span className="text-xs font-medium text-gray-700">{professor.difficulty.toFixed(1)}/5</span>
-        </div>
+        )}
+      </div>
+
+      {/* Right: rating count */}
+      <div className="shrink-0 text-right">
+        <p className="text-sm font-bold text-gray-700">{professor.num_ratings}</p>
+        <p className="text-xs text-gray-400">oy</p>
+        {professor.would_take_again > 0 && (
+          <p className="text-xs text-green-600 font-medium mt-1">
+            %{Math.round(professor.would_take_again)}
+          </p>
+        )}
       </div>
     </Link>
   );

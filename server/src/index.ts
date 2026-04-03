@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { initDb } from './db/database';
+import { initDb, getDb } from './db/database';
 import authRoutes from './routes/auth';
 import universityRoutes from './routes/universities';
 import professorRoutes from './routes/professors';
@@ -23,11 +23,19 @@ app.use('/api/search', searchRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
+app.get('/api/stats', (_req, res) => {
+  const db = getDb();
+  const professors = (db.prepare('SELECT COUNT(*) as c FROM professors').get() as any).c;
+  const universities = (db.prepare('SELECT COUNT(*) as c FROM universities').get() as any).c;
+  const reviews = (db.prepare('SELECT COUNT(*) as c FROM reviews').get() as any).c;
+  res.json({ professors, universities, reviews });
+});
+
 async function start() {
   console.log('\n🔄 Veritabanı başlatılıyor...');
   await initDb();
   app.listen(PORT, () => {
-    console.log(`\n🎓 Hocayı Değerlendir API başlatıldı`);
+    console.log(`\n🎓 KampüsPuan API başlatıldı`);
     console.log(`📡 Port: ${PORT}`);
     console.log(`🔗 http://localhost:${PORT}/api\n`);
   });

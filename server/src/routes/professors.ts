@@ -2,44 +2,73 @@ import { Router, Request, Response } from 'express';
 import { getDb } from '../db/database';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 
+function anonymizeName(name: string | null | undefined): string {
+  if (!name) return 'Anonim';
+  return name.trim().split(/\s+/).filter(Boolean).map((w: string) => w[0].toUpperCase() + '.').join('');
+}
+
 const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-  const { search, university_id, department_id, sort = 'rating' } = req.query;
+  const { search, university_id, department_id, sort = 'rating', page = '1', limit = '24', only_rated } = req.query;
+  const pageNum = Math.max(1, parseInt(page as string) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 24));
+  const offset = (pageNum - 1) * limitNum;
   const db = getDb();
 
-  let query = `
-    SELECT p.*, u.name as university_name, u.short_name as university_short, d.name as department_name
-    FROM professors p
-    LEFT JOIN universities u ON p.university_id = u.id
-    LEFT JOIN departments d ON p.department_id = d.id
-    WHERE 1=1
-  `;
+  let where = 'WHERE 1=1';
   const params: any[] = [];
 
   if (search) {
-    query += ' AND (p.name LIKE ? OR u.name LIKE ? OR d.name LIKE ?)';
+    where += ' AND (p.name LIKE ? OR u.name LIKE ? OR d.name LIKE ?)';
     const term = `%${search}%`;
     params.push(term, term, term);
   }
   if (university_id) {
-    query += ' AND p.university_id = ?';
+    where += ' AND p.university_id = ?';
     params.push(university_id);
   }
   if (department_id) {
-    query += ' AND p.department_id = ?';
+    where += ' AND p.department_id = ?';
     params.push(department_id);
+  }
+  if (only_rated === '1') {
+    where += ' AND p.num_ratings > 0';
   }
 
   const sortMap: Record<string, string> = {
-    rating: 'p.avg_rating DESC',
+    rating: 'p.num_ratings DESC, p.avg_rating DESC',
     difficulty: 'p.difficulty DESC',
     ratings_count: 'p.num_ratings DESC',
     name: 'p.name ASC',
   };
-  query += ` ORDER BY ${sortMap[sort as string] || 'p.avg_rating DESC'}`;
+  const orderBy = sortMap[sort as string] || 'p.num_ratings DESC, p.avg_rating DESC';
 
-  res.json(db.prepare(query).all(...params));
+  const baseJoin = `
+    FROM professors p
+    LEFT JOIN universities u ON p.university_id = u.id
+    LEFT JOIN departments d ON p.department_id = d.id
+    ${where}
+  `;
+
+  const total = (db.prepare(`SELECT COUNT(*) as cnt ${baseJoin}`).get(...params) as any).cnt;
+
+  const professors = db.prepare(`
+    SELECT p.id, p.name, p.title, p.avg_rating, p.difficulty, p.would_take_again, p.num_ratings,
+           p.university_id, p.department_id,
+           u.name as university_name, u.short_name as university_short, d.name as department_name
+    ${baseJoin}
+    ORDER BY ${orderBy}
+    LIMIT ? OFFSET ?
+  `).all(...params, limitNum, offset);
+
+  res.json({
+    professors,
+    total,
+    page: pageNum,
+    pages: Math.ceil(total / limitNum),
+    limit: limitNum,
+  });
 });
 
 router.get('/:id', optionalAuth, (req: AuthRequest, res: Response) => {
@@ -59,7 +88,7 @@ router.get('/:id', optionalAuth, (req: AuthRequest, res: Response) => {
   }
 
   const reviews = db.prepare(`
-    SELECT r.*, u.name as user_name, c.name as course_name, c.code as course_code,
+    SELECT r.*, u.name as user_name, u.is_graduate, c.name as course_name, c.code as course_code,
            GROUP_CONCAT(rt.tag, '|||') as tags
     FROM reviews r
     LEFT JOIN users u ON r.user_id = u.id
@@ -72,6 +101,7 @@ router.get('/:id', optionalAuth, (req: AuthRequest, res: Response) => {
 
   const formattedReviews = reviews.map(r => ({
     ...r,
+    user_name: anonymizeName(r.user_name),
     tags: r.tags ? r.tags.split('|||') : [],
   }));
 
@@ -93,6 +123,41 @@ router.get('/:id', optionalAuth, (req: AuthRequest, res: Response) => {
   `).all(req.params.id);
 
   res.json({ ...professor, reviews: formattedReviews, courses, tagStats });
+});
+
+router.post('/:id/courses', authenticate, (req: AuthRequest, res: Response) => {
+  const { code, name } = req.body;
+  if (!code || !name) {
+    res.status(400).json({ error: 'Ders kodu ve adı zorunlu' });
+    return;
+  }
+  const db = getDb();
+
+  const professor = db.prepare('SELECT university_id, department_id FROM professors WHERE id = ?').get(req.params.id) as any;
+  if (!professor) {
+    res.status(404).json({ error: 'Hoca bulunamadı' });
+    return;
+  }
+
+  const user = db.prepare('SELECT university_id FROM users WHERE id = ?').get(req.userId) as any;
+  const profUniId = professor.university_id ? Number(professor.university_id) : null;
+  const userUniId = user?.university_id ? Number(user.university_id) : null;
+  if (!user || !userUniId || !profUniId || userUniId !== profUniId) {
+    res.status(403).json({ error: 'Bu hocanın üniversitesinde kayıtlı değilsiniz' });
+    return;
+  }
+
+  const existing = db.prepare('SELECT id FROM courses WHERE professor_id = ? AND LOWER(code) = LOWER(?)').get(req.params.id, code.trim()) as any;
+  if (existing) {
+    res.status(409).json({ error: 'Bu ders kodu zaten eklenmiş' });
+    return;
+  }
+
+  const result = db.prepare(
+    'INSERT INTO courses (university_id, department_id, professor_id, code, name) VALUES (?, ?, ?, ?, ?)'
+  ).run(professor.university_id, professor.department_id || null, req.params.id, code.trim().toUpperCase(), name.trim());
+
+  res.json({ id: result.lastInsertRowid, code: code.trim().toUpperCase(), name: name.trim() });
 });
 
 router.post('/', (req: Request, res: Response) => {

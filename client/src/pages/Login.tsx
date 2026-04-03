@@ -20,7 +20,11 @@ export default function Login() {
       const data = await apiLogin(form.email, form.password);
       login(data.token, data.user);
       toast.success(`Hoş geldin, ${data.user.name}!`);
-      navigate('/');
+      if (!data.user.verified) {
+        navigate('/verify-email');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Giriş yapılamadı');
     } finally {
@@ -29,14 +33,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#FAFAFA]">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Giriş Yap</h1>
-          <p className="text-gray-500 text-sm mt-1">Hocayı Değerlendir'e hoş geldiniz</p>
+          <p className="text-gray-500 text-sm mt-1">KampüsPuan'a hoş geldiniz</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -48,7 +52,7 @@ export default function Login() {
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="ornek@universite.edu.tr"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-field w-full"
               />
             </div>
             <div>
@@ -59,7 +63,7 @@ export default function Login() {
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   placeholder="••••••••"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  className="input-field w-full pr-10"
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -69,7 +73,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-coral-500 hover:bg-coral-600 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
             >
               {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
             </button>
@@ -78,7 +82,7 @@ export default function Login() {
           <div className="text-center mt-6 pt-6 border-t border-gray-100">
             <p className="text-sm text-gray-500">
               Hesabınız yok mu?{' '}
-              <Link to="/register" className="text-blue-600 font-semibold hover:underline">Kayıt Ol</Link>
+              <Link to="/register" className="text-coral-500 font-semibold hover:underline">Kayıt Ol</Link>
             </p>
           </div>
         </div>

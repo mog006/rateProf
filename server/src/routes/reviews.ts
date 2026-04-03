@@ -4,11 +4,24 @@ import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/', optionalAuth, (req: AuthRequest, res: Response) => {
+function anonymizeName(name: string | null | undefined): string {
+  if (!name) return 'Anonim';
+  return name.trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + '.').join('');
+}
+
+router.post('/', authenticate, (req: AuthRequest, res: Response) => {
   const {
     professor_id, course_id, overall_rating, difficulty,
     would_take_again, comment, grade, attendance, textbook, tags
   } = req.body;
+
+  // Verified user check
+  const db = getDb();
+  const userRow = db.prepare('SELECT verified FROM users WHERE id = ?').get(req.userId) as any;
+  if (!userRow || !userRow.verified) {
+    res.status(403).json({ error: 'Değerlendirme yapabilmek için e-postanı doğrulamalısın' });
+    return;
+  }
 
   if (!professor_id || !overall_rating || !difficulty || comment === undefined || would_take_again === undefined) {
     res.status(400).json({ error: 'Zorunlu alanlar eksik' });
@@ -22,8 +35,6 @@ router.post('/', optionalAuth, (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: 'Yorum en az 10 karakter olmalı' });
     return;
   }
-
-  const db = getDb();
 
   const result = db.prepare(`
     INSERT INTO reviews (user_id, professor_id, course_id, overall_rating, difficulty, would_take_again, comment, grade, attendance, textbook)
@@ -93,15 +104,33 @@ router.post('/:id/vote', authenticate, (req: AuthRequest, res: Response) => {
   }
 });
 
+router.post('/:id/report', (req: AuthRequest, res: Response) => {
+  const { reason } = req.body;
+  if (!reason || typeof reason !== 'string' || reason.trim().length < 2) {
+    res.status(400).json({ error: 'Bildirim sebebi zorunludur' });
+    return;
+  }
+  const db = getDb();
+  const review = db.prepare('SELECT id FROM reviews WHERE id = ?').get(req.params.id);
+  if (!review) {
+    res.status(404).json({ error: 'Değerlendirme bulunamadı' });
+    return;
+  }
+  db.prepare('INSERT INTO review_reports (review_id, reason) VALUES (?, ?)').run(req.params.id, reason.trim());
+  res.json({ success: true });
+});
+
 router.get('/recent', (req: AuthRequest, res: Response) => {
   const db = getDb();
   const reviews = db.prepare(`
     SELECT r.*, p.name as professor_name, u.name as university_name, u.short_name as university_short,
            c.name as course_name, c.code as course_code,
+           ru.is_graduate,
            GROUP_CONCAT(rt.tag, '|||') as tags
     FROM reviews r
     JOIN professors p ON r.professor_id = p.id
     JOIN universities u ON p.university_id = u.id
+    LEFT JOIN users ru ON r.user_id = ru.id
     LEFT JOIN courses c ON r.course_id = c.id
     LEFT JOIN review_tags rt ON rt.review_id = r.id
     GROUP BY r.id
@@ -109,7 +138,11 @@ router.get('/recent', (req: AuthRequest, res: Response) => {
     LIMIT 10
   `).all() as any[];
 
-  res.json(reviews.map(r => ({ ...r, tags: r.tags ? r.tags.split('|||') : [] })));
+  res.json(reviews.map(r => ({
+    ...r,
+    user_name: anonymizeName(r.user_name),
+    tags: r.tags ? r.tags.split('|||') : [],
+  })));
 });
 
 export default router;

@@ -118,6 +118,7 @@ export async function initDb(): Promise<void> {
 
   _db = new DbWrapper(sqlDb);
   initializeSchema();
+  migrateSchema();
   // Fake seed sadece DB ilk kez oluşturulduğunda ve boşsa çalışır
   const uniCount = _db.prepare('SELECT COUNT(*) as c FROM universities').get() as { c: number };
   if (Number(uniCount?.c) === 0) {
@@ -225,7 +226,44 @@ function initializeSchema() {
       is_helpful INTEGER NOT NULL,
       UNIQUE(review_id, user_id)
     );
+
+    CREATE TABLE IF NOT EXISTS review_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      review_id INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      reported_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_professors_university ON professors(university_id);
+    CREATE INDEX IF NOT EXISTS idx_professors_department ON professors(department_id);
+    CREATE INDEX IF NOT EXISTS idx_professors_ratings ON professors(num_ratings DESC);
+    CREATE INDEX IF NOT EXISTS idx_professors_avg_rating ON professors(avg_rating DESC);
+    CREATE INDEX IF NOT EXISTS idx_professors_name ON professors(name);
+    CREATE INDEX IF NOT EXISTS idx_reviews_professor ON reviews(professor_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_review_tags_review ON review_tags(review_id);
+    CREATE INDEX IF NOT EXISTS idx_departments_university ON departments(university_id);
+    CREATE INDEX IF NOT EXISTS idx_departments_faculty ON departments(faculty_id);
+    CREATE INDEX IF NOT EXISTS idx_faculties_university ON faculties(university_id);
+    CREATE INDEX IF NOT EXISTS idx_courses_professor ON courses(professor_id);
+    CREATE INDEX IF NOT EXISTS idx_courses_university ON courses(university_id);
   `);
+}
+
+// ─── Migration ────────────────────────────────────────────────────────────
+function migrateSchema() {
+  const db = getDb();
+  const migrations = [
+    "ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN verification_code TEXT",
+    "ALTER TABLE users ADD COLUMN code_expires_at TEXT",
+    "ALTER TABLE users ADD COLUMN is_graduate INTEGER DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN graduation_year INTEGER",
+  ];
+  for (const sql of migrations) {
+    try { db.exec(sql); } catch { /* column already exists */ }
+  }
 }
 
 // ─── Seed ──────────────────────────────────────────────────────────────────
